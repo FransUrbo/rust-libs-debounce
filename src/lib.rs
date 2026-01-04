@@ -1,7 +1,7 @@
 #![no_std]
 
+use embassy_rp::gpio::{Input, Level};
 use embassy_time::{Duration, Timer};
-use embassy_rp::gpio::{Level, Input};
 
 pub struct Debouncer<'a> {
     input: Input<'a>,
