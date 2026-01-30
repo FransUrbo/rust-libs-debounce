@@ -87,12 +87,18 @@ jobs:
       - name: Build ${{ matrix.target }}
         run: cargo build --verbose --profile ${{ matrix.target }}
 
+      - name: Generate checksums
+        run: |
+          sha256sum target/thumbv6m-none-eabi/${{ matrix.target == 'dev' && 'debug' || matrix.target }}/libdebounce.rlib \
+            > target/thumbv6m-none-eabi/${{ matrix.target == 'dev' && 'debug' || matrix.target }}/libdebounce.rlib.sha256
+
       - name: Archive artifacts
         uses: actions/upload-artifact@v4
         with:
           name: artifacts-${{ matrix.target }}
           path: |
             target/thumbv6m-none-eabi/${{ matrix.target == 'dev' && 'debug' || matrix.target }}/libdebounce.rlib
+            target/thumbv6m-none-eabi/${{ matrix.target == 'dev' && 'debug' || matrix.target }}/libdebounce.rlib.sha256
             target/package/*.crate
             _check-package.log
             _check-fmt.log
@@ -123,9 +129,16 @@ jobs:
       - name: Create crate
         run: cargo package
 
+      - name: Generate checksums
+        run: |
+          set -- $(cargo metadata --format-version 1 --no-deps | jq -r '.packages[] | [.name, .version] | @tsv')
+          name="${1}"; version="${2}"
+          sha256sum "target/package/${name}-${version}.crate" > "target/package/${name}-${version}.crate.sha256"
+
       - name: Archive artifacts
         uses: actions/upload-artifact@v4
         with:
           name: artifacts-crate
           path: |
             target/package/*.crate
+            target/package/*.crate.sha256
